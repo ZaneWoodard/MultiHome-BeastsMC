@@ -3,6 +3,8 @@ package net.madmanmarkau.MultiHome;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.List;
+
 public class Settings {
     private static MultiHome plugin;
 
@@ -97,33 +99,24 @@ public class Settings {
 
     public static int getSettingMaxHomes(Player player) {
         int maxhomes = 1;
-        if (player.hasPermission("ranks.adventurer")) {
+
+        List<String> playerGroups = HomePermissions.getGroups(player);
+        if(playerGroups.contains("Adventurer")) {
             maxhomes += 5;
-        }
-        if (player.hasPermission("ranks.hero")) {
+        } else if(playerGroups.contains("Hero")) {
             maxhomes += 4;
-            return maxhomes;
-        }
-        if (player.hasPermission("ranks.patron")) {
+        } else if(playerGroups.contains("Patron")) {
             maxhomes += 3;
-            return maxhomes;
-        }
-        if (player.hasPermission("ranks.uberdonator")) {
+        } else if(playerGroups.contains("UberDonator")) {
             maxhomes += 2;
-            return maxhomes;
-        }
-        if (player.hasPermission("ranks.sponsor")) {
+        } else if(playerGroups.contains("Sponsor")) {
             maxhomes += 2;
-            return maxhomes;
-        }
-        if (player.hasPermission("ranks.supporter")) {
+        } else if(playerGroups.contains("Supporter")) {
             maxhomes += 2;
-            return maxhomes;
+        } else if(playerGroups.contains("EliteDonator")) {
+            maxhomes += 1;
         }
-        if (player.hasPermission("ranks.elitedonator")) {
-            maxhomes++;
-            return maxhomes;
-        }
+
         return maxhomes;
     }
 
