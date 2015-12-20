@@ -11,7 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class HomePermissions {
 	private static PermissionsHandler handler;
