@@ -1,5 +1,5 @@
 CREATE TABLE `homes` (
-  `owner` varchar(50) NOT NULL,
+  `owner` varchar(36) NOT NULL,
   `home` varchar(50) NOT NULL,
   `world` varchar(50) NOT NULL,
   `x` double NOT NULL,
