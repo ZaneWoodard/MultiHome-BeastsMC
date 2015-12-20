@@ -11,6 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
+import java.util.*;
+
 public class HomePermissions {
 	private static PermissionsHandler handler;
 	private static Permission vault = null;
@@ -99,7 +101,7 @@ public class HomePermissions {
         return isInGroup;
     }
 
-    public static String[] getGroups(Player player) {
+    public static List<String> getGroups(Player player) {
         String[] groups = {};
         switch (handler) {
             case VAULT:
@@ -113,6 +115,6 @@ public class HomePermissions {
             case SUPERPERMS:
                 break; // Groups not supported.
         }
-        return groups;
+        return Arrays.asList(groups);
     }
 }
