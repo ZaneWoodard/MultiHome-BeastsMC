@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import net.madmanmarkau.MultiHome.Messaging;
 import net.madmanmarkau.MultiHome.MultiHome;
@@ -17,12 +18,12 @@ import org.bukkit.Location;
 
 /**
  * Manages a database of player home locations.
- * @author MadManMarkAu
+ * @author MadManMarkAu, Zane Woodard
  */
 
 public class HomeManagerFile extends HomeManager {
     private final File homesFile;
-	private HashMap<String, ArrayList<HomeEntry>> homeEntries = new HashMap<String, ArrayList<HomeEntry>>();
+	private HashMap<UUID, ArrayList<HomeEntry>> homeEntries = new HashMap<>();
 	
 	public HomeManagerFile(MultiHome plugin) {
 		super(plugin);
@@ -39,9 +40,9 @@ public class HomeManagerFile extends HomeManager {
 	}
 
 	@Override
-	public HomeEntry getHome(String player, String name) {
-		if (this.homeEntries.containsKey(player.toLowerCase())) {
-			ArrayList<HomeEntry> homes = this.homeEntries.get(player.toLowerCase());
+	public HomeEntry getHome(UUID playerUUID, String name) {
+		if (this.homeEntries.containsKey(playerUUID)) {
+			ArrayList<HomeEntry> homes = this.homeEntries.get(playerUUID);
 	
 			for (HomeEntry thisLocation : homes) {
 				if (thisLocation.getHomeName().compareToIgnoreCase(name) == 0) {
@@ -54,14 +55,14 @@ public class HomeManagerFile extends HomeManager {
 	}
 
 	@Override
-	public void addHome(String player, String name, Location location) {
+	public void addHome(UUID playerUUID, String name, Location location) {
 		ArrayList<HomeEntry> homes;
 		
 		// Get the ArrayList of homes for this player
-		if (this.homeEntries.containsKey(player.toLowerCase())) {
-			homes = this.homeEntries.get(player.toLowerCase());
+		if (this.homeEntries.containsKey(playerUUID)) {
+			homes = this.homeEntries.get(playerUUID);
 		} else {
-			homes = new ArrayList<HomeEntry>();
+			homes = new ArrayList<>();
 		}
 
 		boolean homeSet = false;
@@ -70,7 +71,7 @@ public class HomeManagerFile extends HomeManager {
 			HomeEntry thisHome = homes.get(index);
 			if (thisHome.getHomeName().compareToIgnoreCase(name) == 0) {
 				// An existing home was found. Overwrite it.
-				thisHome.setOwnerName(player);
+				thisHome.setOwnerUUID(playerUUID);
 				thisHome.setHomeName(name);
 				thisHome.setHomeLocation(location);
 				homes.set(index, thisHome);
@@ -80,23 +81,23 @@ public class HomeManagerFile extends HomeManager {
 		
 		if (!homeSet) {
 			// No existing location found. Create new entry.
-			HomeEntry home = new HomeEntry(player, name.toLowerCase(), location);
+			HomeEntry home = new HomeEntry(playerUUID, name.toLowerCase(), location);
 			homes.add(home);
 		}
 		
 		// Replace the ArrayList in the homes HashMap
-		this.homeEntries.remove(player.toLowerCase());
-		this.homeEntries.put(player.toLowerCase(), homes);
+		this.homeEntries.remove(playerUUID);
+		this.homeEntries.put(playerUUID, homes);
 
 		// Save
 		this.saveHomes();
 	}
 
 	@Override
-	public void removeHome(String player, String name) {
-		if (this.homeEntries.containsKey(player.toLowerCase())) {
-			ArrayList<HomeEntry> playerHomeList = this.homeEntries.get(player.toLowerCase());
-			ArrayList<HomeEntry> removeList = new ArrayList<HomeEntry>();
+	public void removeHome(UUID playerUUID, String name) {
+		if (this.homeEntries.containsKey(playerUUID)) {
+			ArrayList<HomeEntry> playerHomeList = this.homeEntries.get(playerUUID);
+			ArrayList<HomeEntry> removeList = new ArrayList<>();
 
 			// Find all homes matching "name"
 			for (HomeEntry thisHome : playerHomeList) {
@@ -110,9 +111,9 @@ public class HomeManagerFile extends HomeManager {
 			playerHomeList.removeAll(removeList);
 
 			// Replace the ArrayList in the homes HashMap
-			this.homeEntries.remove(player.toLowerCase());
+			this.homeEntries.remove(playerUUID);
 			if (!playerHomeList.isEmpty()) {
-				this.homeEntries.put(player.toLowerCase(), playerHomeList);
+				this.homeEntries.put(playerUUID, playerHomeList);
 			}
 
 			// Save
@@ -121,25 +122,25 @@ public class HomeManagerFile extends HomeManager {
 	}
 
 	@Override
-	public boolean getUserExists(String player) {
-		return this.homeEntries.containsKey(player.toLowerCase());
+	public boolean getUserExists(UUID playerUUID) {
+		return this.homeEntries.containsKey(playerUUID);
 	}
 
 	@Override
-	public int getUserHomeCount(String player) {
-		if (this.homeEntries.containsKey(player.toLowerCase())) {
-			return this.homeEntries.get(player.toLowerCase()).size();
+	public int getUserHomeCount(UUID playerUUID) {
+		if (this.homeEntries.containsKey(playerUUID)) {
+			return this.homeEntries.get(playerUUID).size();
 		} else {
 			return 0;
 		}
 	}
 
 	@Override
-	public ArrayList<HomeEntry> listUserHomes(String player) {
-		if (this.homeEntries.containsKey(player.toLowerCase())) {
-			return this.homeEntries.get(player.toLowerCase());
+	public ArrayList<HomeEntry> listUserHomes(UUID playerUUID) {
+		if (this.homeEntries.containsKey(playerUUID)) {
+			return this.homeEntries.get(playerUUID);
 		} else {
-			return new ArrayList<HomeEntry>();
+			return new ArrayList<>();
 		}
 	}
 
@@ -149,10 +150,10 @@ public class HomeManagerFile extends HomeManager {
 
 		for (HomeEntry thisEntry : homes) {
 			// Get the ArrayList of homes for this player
-			if (this.homeEntries.containsKey(thisEntry.getOwnerName().toLowerCase())) {
-				playerHomes = this.homeEntries.get(thisEntry.getOwnerName().toLowerCase());
+			if (this.homeEntries.containsKey(thisEntry.getOwnerUUID())) {
+				playerHomes = this.homeEntries.get(thisEntry.getOwnerUUID());
 			} else {
-				playerHomes = new ArrayList<HomeEntry>();
+				playerHomes = new ArrayList<>();
 			}
 
 			boolean homeFound = false;
@@ -162,7 +163,7 @@ public class HomeManagerFile extends HomeManager {
 				if (thisHome.getHomeName().compareToIgnoreCase(thisEntry.getHomeName()) == 0) {
 					// An existing home was found.
 					if (overwrite) {
-						thisHome.setOwnerName(thisEntry.getOwnerName());
+						thisHome.setOwnerUUID(thisEntry.getOwnerUUID());
 						thisHome.setHomeName(thisEntry.getHomeName());
 						thisHome.setHomeLocation(thisEntry.getHomeLocation(plugin.getServer()));
 						playerHomes.set(index, thisHome);
@@ -174,13 +175,13 @@ public class HomeManagerFile extends HomeManager {
 			
 			if (!homeFound) {
 				// No existing location found. Create new entry.
-				HomeEntry newHome = new HomeEntry(thisEntry.getOwnerName(), thisEntry.getHomeName(), thisEntry.getHomeLocation(plugin.getServer()));
+				HomeEntry newHome = new HomeEntry(thisEntry.getOwnerUUID(), thisEntry.getHomeName(), thisEntry.getHomeLocation(plugin.getServer()));
 				playerHomes.add(newHome);
 			}
 
 			// Replace the ArrayList in the homes HashMap
-			this.homeEntries.remove(thisEntry.getOwnerName().toLowerCase());
-			this.homeEntries.put(thisEntry.getOwnerName().toLowerCase(), playerHomes);
+			this.homeEntries.remove(thisEntry.getOwnerUUID());
+			this.homeEntries.put(thisEntry.getOwnerUUID(), playerHomes);
 		}
 
 		// Save
@@ -201,9 +202,9 @@ public class HomeManagerFile extends HomeManager {
 			writer.write("# <username>;<x>;<y>;<z>;<pitch>;<yaw>;<world>[;<name>]" + Util.newLine());
 			writer.write(Util.newLine());
 
-			for (Entry<String, ArrayList<HomeEntry>> entry : this.homeEntries.entrySet()) {
+			for (Entry<UUID, ArrayList<HomeEntry>> entry : this.homeEntries.entrySet()) {
 				for (HomeEntry thisHome : entry.getValue()) {
-					writer.write(thisHome.getOwnerName() + ";" + thisHome.getX() + ";" + thisHome.getY() + ";" + thisHome.getZ() + ";"
+					writer.write(thisHome.getOwnerUUID() + ";" + thisHome.getX() + ";" + thisHome.getY() + ";" + thisHome.getZ() + ";"
 							+ thisHome.getPitch() + ";" + thisHome.getYaw() + ";"
 							+ thisHome.getWorld() + ";" + thisHome.getHomeName() + Util.newLine());
 				}
@@ -237,11 +238,11 @@ public class HomeManagerFile extends HomeManager {
 							ArrayList<HomeEntry> homeList;
 	
 							// Find HashMap entry for player
-							if (!this.homeEntries.containsKey(thisHome.getOwnerName().toLowerCase())) {
-								homeList = new ArrayList<HomeEntry>();
+							if (!this.homeEntries.containsKey(thisHome.getOwnerUUID())) {
+								homeList = new ArrayList<>();
 							} else {
 								// Player not exist. Create dummy entry.
-								homeList = this.homeEntries.get(thisHome.getOwnerName().toLowerCase());
+								homeList = this.homeEntries.get(thisHome.getOwnerUUID());
 							}
 							
 							// Don't save if this is a duplicate entry.
@@ -256,7 +257,7 @@ public class HomeManagerFile extends HomeManager {
 								homeList.add(thisHome);
 							}
 	
-							this.homeEntries.put(thisHome.getOwnerName().toLowerCase(), homeList);
+							this.homeEntries.put(thisHome.getOwnerUUID(), homeList);
 						}
 					}
 	
@@ -312,7 +313,7 @@ public class HomeManagerFile extends HomeManager {
 		}
 
 		if (values.length == 7 || values.length == 8) {
-			return new HomeEntry(player, name, world, X, Y, Z, pitch, yaw);
+			return new HomeEntry(UUID.fromString(player), name, world, X, Y, Z, pitch, yaw);
 		}
 		
 		return null;

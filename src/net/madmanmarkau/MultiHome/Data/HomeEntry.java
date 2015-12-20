@@ -4,8 +4,10 @@ import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 
+import java.util.UUID;
+
 public class HomeEntry {
-	private String ownerName = "";
+	private UUID ownerUUID;
 	private String homeName = "";
 	private String world = "";
 	private double X = 0, Y = 0, Z = 0;
@@ -13,8 +15,8 @@ public class HomeEntry {
 
 	public HomeEntry() {}
 	
-	public HomeEntry(String ownerName, String homeName, String world, double X, double Y, double Z, float pitch, float yaw) {
-		this.setOwnerName(ownerName);
+	public HomeEntry(UUID ownerUUID, String homeName, String world, double X, double Y, double Z, float pitch, float yaw) {
+		this.setOwnerUUID(ownerUUID);
 		this.setHomeName(homeName);
 		this.setWorld(world);
 		this.setX(X);
@@ -24,8 +26,8 @@ public class HomeEntry {
 		this.setYaw(yaw);
 	}
 	
-	public HomeEntry(String ownerName, String homeName, Location location) {
-		this.setOwnerName(ownerName);
+	public HomeEntry(UUID ownerUUID, String homeName, Location location) {
+		this.setOwnerUUID(ownerUUID);
 		this.setHomeName(homeName);
 		this.setWorld(location.getWorld().getName());
 		this.setX(location.getX());
@@ -44,12 +46,12 @@ public class HomeEntry {
 		this.setYaw(yaw);
 	}
 	
-	public String getOwnerName() {
-		return ownerName;
+	public UUID getOwnerUUID() {
+		return this.ownerUUID;
 	}
 
-	public void setOwnerName(String ownerName) {
-		this.ownerName = ownerName;
+	public void setOwnerUUID(UUID ownerUUID) {
+		this.ownerUUID = ownerUUID;
 	}
 
 	public String getHomeName() {
