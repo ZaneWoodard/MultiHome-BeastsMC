@@ -86,4 +86,16 @@ public class HomePermissions {
 
 		return "default";
 	}
+
+    public static boolean inGroup(Player player, String group) {
+        boolean isInGroup = false;
+        switch (handler) {
+            case VAULT:
+                isInGroup = vault.playerInGroup(player, group);
+
+            case PERMISSIONSEX:
+                isInGroup = PermissionsEx.getUser(player).inGroup(group, false);
+        }
+        return isInGroup;
+    }
 }
