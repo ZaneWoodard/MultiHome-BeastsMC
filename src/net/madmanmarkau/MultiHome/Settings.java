@@ -101,9 +101,13 @@ public class Settings {
         int maxhomes = 1;
 
         List<String> playerGroups = HomePermissions.getGroups(player);
+
         if(playerGroups.contains("Adventurer")) {
             maxhomes += 5;
-        } else if(playerGroups.contains("Hero")) {
+        }
+
+        //Separate if blocks, Adventurer stacks on other ranks
+        if(playerGroups.contains("Hero")) {
             maxhomes += 4;
         } else if(playerGroups.contains("Patron")) {
             maxhomes += 3;
