@@ -98,4 +98,21 @@ public class HomePermissions {
         }
         return isInGroup;
     }
+
+    public static String[] getGroups(Player player) {
+        String[] groups = {};
+        switch (handler) {
+            case VAULT:
+                groups = vault.getPlayerGroups(player);
+                break;
+
+            case PERMISSIONSEX:
+                groups = PermissionsEx.getUser(player).getGroupsNames();
+                break;
+
+            case SUPERPERMS:
+                break; // Groups not supported.
+        }
+        return groups;
+    }
 }
