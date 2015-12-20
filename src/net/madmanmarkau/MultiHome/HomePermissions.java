@@ -11,46 +11,34 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
-/**
-*
-* @author Sleaker
-*
-*/
 public class HomePermissions {
 	private static PermissionsHandler handler;
-	private static Plugin permissionPlugin = null;
 	private static Permission vault = null;
 
 	private enum PermissionsHandler {
-		VAULT, PERMISSIONSEX, SUPERPERMS, NONE;
+		VAULT, PERMISSIONSEX, SUPERPERMS
 	}
 
-	public static boolean initialize(JavaPlugin plugin) {
+	public static void initialize(JavaPlugin plugin) {
 		Plugin permex = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
 		RegisteredServiceProvider<Permission> vaultPermissionProvider = null;
 		
 		try {
 			vaultPermissionProvider = plugin.getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
 		} catch (NoClassDefFoundError e) {
-		} catch (Exception e) {
-			// Eat errors
 		}
 
         if (vaultPermissionProvider != null) {
         	vault = vaultPermissionProvider.getProvider();
 			handler = PermissionsHandler.VAULT;
 			Messaging.logInfo("Using Vault for permissions system.", plugin);
-			return true;
         } else if (permex != null) {
-			permissionPlugin = permex;
 			handler = PermissionsHandler.PERMISSIONSEX;
 			Messaging.logInfo("Using PermissionsEx for permissions system.", plugin);
-			return true;
 		} else {
 			handler = PermissionsHandler.SUPERPERMS;
 			Messaging.logWarning("A permission plugin was not detected! Defaulting to CraftBukkit permissions system.", plugin);
 			Messaging.logWarning("Groups disabled. All players defaulting to \"default\" group.", plugin);
-			return true;
 		}
 	}
 
@@ -76,7 +64,7 @@ public class HomePermissions {
 	}
 
 	public static String getGroup(Player player) {
-		String[] groups = {};
+		String[] groups;
 		
 		if (player != null) {
 			switch (handler) {
@@ -85,7 +73,7 @@ public class HomePermissions {
 					
 				case PERMISSIONSEX:
 					groups = PermissionsEx.getPermissionManager().getUser(player).getGroupsNames();
-					
+
 					if (groups != null && groups.length > 0) {
 						return groups[0];
 					}

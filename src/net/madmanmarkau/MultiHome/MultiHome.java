@@ -37,7 +37,8 @@ public class MultiHome extends JavaPlugin {
 			dataPath.mkdirs();
 		}
 
-		if (!HomePermissions.initialize(this)) return;
+
+		HomePermissions.initialize(this);
 		disableEssentials();
 		Settings.initialize(this);
 		Settings.loadSettings();
