@@ -13,6 +13,7 @@ public class MultiHome extends JavaPlugin {
 	private CoolDownManager cooldowns;
 
 	private HikariCPHandler hikari;
+    private DataCache cache;
 
     private MultiHomePlayerListener playerListener = new MultiHomePlayerListener(this);
 	private MultiHomeEntityListener entityListener = new MultiHomeEntityListener(this);
@@ -65,6 +66,7 @@ public class MultiHome extends JavaPlugin {
 
 			Messaging.logInfo("Unknown storage method. Defaulting to \"file\" storage method for database.", this);
 		}
+        cache = new DataCache();
 
 		
 
@@ -140,5 +142,9 @@ public class MultiHome extends JavaPlugin {
 
     public HikariCPHandler getHikari() {
         return this.hikari;
+    }
+
+    public DataCache getCache() {
+        return this.cache;
     }
 }

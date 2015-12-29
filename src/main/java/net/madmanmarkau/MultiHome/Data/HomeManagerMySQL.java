@@ -2,7 +2,6 @@ package net.madmanmarkau.MultiHome.Data;
 
 import net.madmanmarkau.MultiHome.Messaging;
 import net.madmanmarkau.MultiHome.MultiHome;
-import net.madmanmarkau.MultiHome.Settings;
 import org.bukkit.Location;
 
 import java.sql.Connection;
@@ -72,10 +71,19 @@ public class HomeManagerMySQL extends HomeManager {
                 } catch (SQLException ex) {} // Eat errors
             }
 		}
+
+        plugin.getCache().clearHomeCache();
+
 	}
 
 	@Override
 	public HomeEntry getHome(UUID playerUUID, String name) {
+
+        HomeEntry homeEntry = null;
+        if((homeEntry=plugin.getCache().getHome(playerUUID, name))!=null) {
+            return homeEntry;
+        }
+
         PreparedStatement statement = null;
 		ResultSet resultSet = null;
 
@@ -90,13 +98,18 @@ public class HomeManagerMySQL extends HomeManager {
 			resultSet = statement.executeQuery();
 			if (resultSet.first()) {
 				try {
-					return new HomeEntry(playerUUID, name,
-										resultSet.getString("world"), 
-										resultSet.getDouble("x"), 
-										resultSet.getDouble("y"), 
-										resultSet.getDouble("z"), 
-										resultSet.getFloat("pitch"), 
-										resultSet.getFloat("yaw"));
+                    homeEntry = new HomeEntry(playerUUID, name,
+                                                        resultSet.getString("world"),
+                                                        resultSet.getDouble("x"),
+                                                        resultSet.getDouble("y"),
+                                                        resultSet.getDouble("z"),
+                                                        resultSet.getFloat("pitch"),
+                                                        resultSet.getFloat("yaw"));
+
+                    plugin.getCache().addHome(homeEntry);
+
+                    return homeEntry;
+
 				} catch (Exception ex) {ex.printStackTrace();}
 
 			}
@@ -143,6 +156,8 @@ public class HomeManagerMySQL extends HomeManager {
 				exists = resultSet.getInt(1) > 0;
 			}
 
+            HomeEntry homeEntry = new HomeEntry(playerUUID, name, location);
+
 			if (exists) {
 				statement = connection.prepareStatement("UPDATE `homes` SET `owner` = ?, `home` = ?, `world` = ?, `x` = ?, `y` = ?, `z` = ?, `pitch` = ?, `yaw` = ? WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?)");
 
@@ -170,6 +185,8 @@ public class HomeManagerMySQL extends HomeManager {
 				statement.setFloat(8, location.getYaw());
 				statement.execute();
 			}
+
+            plugin.getCache().addHome(homeEntry);
 
 		} catch (SQLException e) {
 			Messaging.logSevere("Failed to add home location: " + e.getMessage(), this.plugin);
@@ -213,10 +230,17 @@ public class HomeManagerMySQL extends HomeManager {
                 } catch (SQLException ex) {} // Eat errors
             }
 		}
+
+        plugin.getCache().removeHome(playerUUID, name);
 	}
 
 	@Override
 	public boolean getUserExists(UUID playerUUID) {
+
+        if(plugin.getCache().homeContainsPlayer(playerUUID)) {
+            return true;
+        }
+
         PreparedStatement statement = null;
 		ResultSet resultSet = null;
 
@@ -313,14 +337,16 @@ public class HomeManagerMySQL extends HomeManager {
 			resultSet = statement.executeQuery();
 			if (resultSet.first()) {
 				do {
-					output.add(new HomeEntry(UUID.fromString(resultSet.getString("owner")),
-							resultSet.getString("home"), 
-							resultSet.getString("world"), 
-							resultSet.getDouble("x"), 
-							resultSet.getDouble("y"), 
-							resultSet.getDouble("z"), 
-							resultSet.getFloat("yaw"), 
-							resultSet.getFloat("pitch")));
+                    HomeEntry homeEntry = new HomeEntry(UUID.fromString(resultSet.getString("owner")),
+                                                resultSet.getString("home"),
+                                                resultSet.getString("world"),
+                                                resultSet.getDouble("x"),
+                                                resultSet.getDouble("y"),
+                                                resultSet.getDouble("z"),
+                                                resultSet.getFloat("yaw"),
+                                                resultSet.getFloat("pitch"));
+                    plugin.getCache().addHome(homeEntry);
+                    output.add(homeEntry);
 				} while (resultSet.next());
 			}
 			
