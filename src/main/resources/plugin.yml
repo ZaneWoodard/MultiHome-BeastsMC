@@ -9,12 +9,8 @@ authors:
  - Zane Woodard
 website: http://dev.bukkit.org/server-mods/multihome/
 softdepend:
- - Register
  - Vault
- - Permissions
  - PermissionsEx
- - PermissionsBukkit
- - PermissionsBukkit1-1
  - EssentialsHome
 license: WTFPL
 description: >
