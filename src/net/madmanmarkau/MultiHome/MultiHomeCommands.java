@@ -5,6 +5,8 @@ import java.util.Date;
 
 import net.madmanmarkau.MultiHome.Data.*;
 
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -145,8 +147,10 @@ public class MultiHomeCommands {
 
 			int warmupTime = Settings.getSettingWarmup(player);
 
-			if (plugin.getHomeManager().getUserExists(owner)) {
-				HomeEntry homeEntry = plugin.getHomeManager().getHome(owner, home);
+			OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(owner);
+
+			if (targetPlayer.hasPlayedBefore() && plugin.getHomeManager().getUserExists(targetPlayer.getUniqueId())) {
+				HomeEntry homeEntry = plugin.getHomeManager().getHome(targetPlayer.getUniqueId(), home);
 
 				if (homeEntry != null) {
 					if (warmupTime > 0 && !HomePermissions.has(player, "multihome.ignore.warmup")) {
@@ -261,8 +265,13 @@ public class MultiHomeCommands {
 
 	public static void setPlayerNamedHome(MultiHome plugin, Player player, String owner, String home) {
 		if (HomePermissions.has(player, "multihome.othershome.set")) {
-			plugin.getHomeManager().addHome(owner, home, player.getLocation());
-			Settings.sendMessageHomeSet(player, owner + ":" + home);
+            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(owner);
+            if(targetPlayer.hasPlayedBefore()) {
+                plugin.getHomeManager().addHome(targetPlayer.getUniqueId(), home, player.getLocation());
+                Settings.sendMessageHomeSet(player, owner + ":" + home);
+            } else {
+                Settings.sendMessageNoPlayer(player, owner);
+            }
 			Messaging.logInfo("Player " + player.getName() + " set player " + owner + "'s home location [" + home + "]", plugin);
 		} else {
 			Messaging.logInfo("Player " + player.getName() + " tried to set player " + owner + "'s home location [" + home + "]. Permission not granted.", plugin);
@@ -294,8 +303,11 @@ public class MultiHomeCommands {
 
 	public static void deletePlayerNamedHome(MultiHome plugin, Player player, String owner, String home) {
 		if (HomePermissions.has(player, "multihome.othershome.delete")) {
-			if (plugin.getHomeManager().getHome(owner, home) != null) {
-				plugin.getHomeManager().removeHome(owner, home);
+            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(owner);
+            if(!targetPlayer.hasPlayedBefore()) {
+                Settings.sendMessageNoPlayer(player, owner);
+            } else if (plugin.getHomeManager().getHome(targetPlayer.getUniqueId(), home) != null) {
+				plugin.getHomeManager().removeHome(targetPlayer.getUniqueId(), home);
 				Settings.sendMessageHomeDeleted(player, owner + ":" + home);
 				Messaging.logInfo("Player " + player.getName() + " deleted " + owner + "'s home location [" + home + "].", plugin);
 			} else {
@@ -317,9 +329,11 @@ public class MultiHomeCommands {
 	}
 
 	public static void listPlayerHomes(MultiHome plugin, Player player, String owner) {
-		if (HomePermissions.has(player, "multihome.othershome.list")) {
-			ArrayList<HomeEntry> homes = plugin.getHomeManager().listUserHomes(owner);
-
+        OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(owner);
+        if(!targetPlayer.hasPlayedBefore()) {
+            Settings.sendMessageNoPlayer(player, owner);
+        } else if (HomePermissions.has(player, "multihome.othershome.list")) {
+			ArrayList<HomeEntry> homes = plugin.getHomeManager().listUserHomes(targetPlayer.getUniqueId());
 			Settings.sendMessageOthersHomeList(player, owner, Util.compileHomeList(homes));
 		} else {
 			Messaging.logInfo("Player " + player.getName() + " tried to list " + owner + "'s home locations. Permission not granted.", plugin);
@@ -327,7 +341,11 @@ public class MultiHomeCommands {
 	}
 
 	public static void listPlayerHomesConsole(MultiHome plugin, CommandSender sender, String owner) {
-		ArrayList<HomeEntry> homes = plugin.getHomeManager().listUserHomes(owner);
+        OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(owner);
+        if(!targetPlayer.hasPlayedBefore()) {
+            Settings.sendMessageNoPlayer(sender, owner);
+        }
+        ArrayList<HomeEntry> homes = plugin.getHomeManager().listUserHomes(targetPlayer.getUniqueId());
 
 		Settings.sendMessageOthersHomeList(sender, owner, Util.compileHomeList(homes));
 	}
