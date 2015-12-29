@@ -29,6 +29,24 @@ public class HomeManagerMySQL extends HomeManager {
 		// Test connection
         if(getConnection()==null) {
             Messaging.logSevere("Failed to contact MySQL server", this.plugin);
+        } else {
+            try {
+                getConnection().createStatement().execute(
+                    "CREATE TABLE IF NOT EXISTS `homes` (" +
+                    "  `owner` varchar(36) NOT NULL," +
+                    "  `home` varchar(50) NOT NULL," +
+                    "  `world` varchar(50) NOT NULL," +
+                    "  `x` double NOT NULL," +
+                    "  `y` double NOT NULL," +
+                    "  `z` double NOT NULL," +
+                    "  `pitch` float NOT NULL," +
+                    "  `yaw` float NOT NULL," +
+                    "  PRIMARY KEY (`owner`,`home`)" +
+                    ");"
+                );
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 	}
 
