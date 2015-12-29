@@ -1,4 +1,4 @@
-CREATE TABLE `homes` (
+CREATE TABLE IF NOT EXISTS `homes` (
   `owner` varchar(36) NOT NULL,
   `home` varchar(50) NOT NULL,
   `world` varchar(50) NOT NULL,
@@ -10,17 +10,17 @@ CREATE TABLE `homes` (
   PRIMARY KEY (`owner`,`home`)
 );
 
-CREATE TABLE `invites` (
-  `source` varchar(50) NOT NULL,
+CREATE TABLE IF NOT EXISTS `invites` (
+  `source` varchar(36) NOT NULL,
   `home` varchar(50) NOT NULL,
-  `target` varchar(50) NOT NULL,
+  `target` varchar(36) NOT NULL,
   `expires` datetime DEFAULT NULL,
   `reason` varchar(250) DEFAULT NULL,
   PRIMARY KEY (`source`,`home`,`target`)
 );
 
-CREATE TABLE `warmups` (
-  `player` varchar(50) NOT NULL,
+CREATE TABLE IF NOT EXISTS `warmups` (
+  `player` varchar(36) NOT NULL,
   `expiry` datetime NOT NULL,
   `world` varchar(50) NOT NULL,
   `x` double NOT NULL,
@@ -32,8 +32,8 @@ CREATE TABLE `warmups` (
   PRIMARY KEY (`player`)
 );
 
-CREATE TABLE `cooldowns` (
-  `player` varchar(50) NOT NULL,
+CREATE TABLE IF NOT EXISTS `cooldowns` (
+  `player` varchar(36) NOT NULL,
   `expiry` datetime NOT NULL,
   PRIMARY KEY (`player`)
 );

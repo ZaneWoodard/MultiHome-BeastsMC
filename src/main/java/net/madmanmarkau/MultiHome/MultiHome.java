@@ -1,7 +1,5 @@
 package net.madmanmarkau.MultiHome;
 
-import java.io.File;
-
 import net.madmanmarkau.MultiHome.Data.*;
 
 import org.bukkit.plugin.Plugin;
@@ -14,14 +12,14 @@ public class MultiHome extends JavaPlugin {
 	private WarmUpManager warmups;
 	private CoolDownManager cooldowns;
 
-	private String pluginDataPath;
-	
-	private MultiHomeCommandExecutor commandExecutor;
-	private MultiHomePlayerListener playerListener = new MultiHomePlayerListener(this);
+	private HikariCPHandler hikari;
+
+    private MultiHomePlayerListener playerListener = new MultiHomePlayerListener(this);
 	private MultiHomeEntityListener entityListener = new MultiHomeEntityListener(this);
 	
 	@Override
 	public void onDisable() {
+        hikari.disable();
 		getServer().getScheduler().cancelTasks(this);
 		warmups.clearWarmups();
 		Messaging.logInfo("Version " + this.getDescription().getVersion() + " unloaded.", this);
@@ -30,11 +28,9 @@ public class MultiHome extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		String dataStoreMethod;
-		pluginDataPath = this.getDataFolder().getAbsolutePath() + File.separator;
-		
-		File dataPath = new File(pluginDataPath);
-		if (!dataPath.exists()) {
-			dataPath.mkdirs();
+
+		if (!this.getDataFolder().exists()) {
+			this.getDataFolder().mkdirs();
 		}
 
 
@@ -54,6 +50,7 @@ public class MultiHome extends JavaPlugin {
 
 			Messaging.logInfo("Using \"file\" storage method for database.", this);
 		} else if (dataStoreMethod.compareToIgnoreCase("sql") == 0) {
+            this.hikari = new HikariCPHandler();
 			this.homes = new HomeManagerMySQL(this);
 			this.invites = new InviteManagerMySQL(this);
 			this.warmups = new WarmUpManagerMySQL(this);
@@ -103,7 +100,7 @@ public class MultiHome extends JavaPlugin {
 	}
     
     private void setupCommands() {
-		this.commandExecutor = new MultiHomeCommandExecutor(this);
+        MultiHomeCommandExecutor commandExecutor = new MultiHomeCommandExecutor(this);
 		
     	getCommand("home").setExecutor(commandExecutor);
     	getCommand("mhome").setExecutor(commandExecutor);
@@ -140,8 +137,8 @@ public class MultiHome extends JavaPlugin {
     public CoolDownManager getCoolDownManager() {
     	return this.cooldowns;
     }
-    
-    public String getPluginDataPath() {
-    	return this.pluginDataPath;
+
+    public HikariCPHandler getHikari() {
+        return this.hikari;
     }
 }

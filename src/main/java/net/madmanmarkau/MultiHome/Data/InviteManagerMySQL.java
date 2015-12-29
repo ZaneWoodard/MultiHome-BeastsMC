@@ -14,29 +14,33 @@ import net.madmanmarkau.MultiHome.*;
 
 
 public class InviteManagerMySQL extends InviteManager {
-	private final String url; // Database URL to connect to.
-	private final String user; // MySQL user to connect as.
-	private final String password; // Password for MySQL user.
-
 	public InviteManagerMySQL(MultiHome plugin) {
 		super(plugin);
 
-		// Save settings
-		this.url = Settings.getDataStoreSettingString("sql", "url");
-		this.user = Settings.getDataStoreSettingString("sql", "user");
-		this.password = Settings.getDataStoreSettingString("sql", "pass");
 
 		// Test connection
+		Connection connection = null;
 		try {
-			Connection connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			} else {
-				connection.close();
+            connection = plugin.getHikari().getConnection();
+            connection.createStatement().execute(
+                    "CREATE TABLE IF NOT EXISTS `invites` (\n"   +
+                    "  `source` varchar(36) NOT NULL,\n"         +
+                    "  `home` varchar(50) NOT NULL,\n"           +
+                    "  `target` varchar(36) NOT NULL,\n"         +
+                    "  `expires` datetime DEFAULT NULL,\n"       +
+                    "  `reason` varchar(250) DEFAULT NULL,\n"    +
+                    "  PRIMARY KEY (`source`,`home`,`target`)\n" +
+                    ");"
+			);
+		} catch(SQLException ex) {
+			Messaging.logSevere("Failed to contact MySQL server or create Invite table", this.plugin);
+			ex.printStackTrace();
+		} finally {
+			if(connection!=null) {
+				try {
+					connection.close();
+				} catch (SQLException e) {}
 			}
-		} catch (SQLException e) {
-			Messaging.logSevere("Failed to contact MySQL server!", this.plugin);
-			e.printStackTrace();
 		}
 	}
 
@@ -46,10 +50,7 @@ public class InviteManagerMySQL extends InviteManager {
 		PreparedStatement statement = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			statement = connection.prepareStatement("DELETE FROM `invites`;");
 			statement.execute();
@@ -78,10 +79,7 @@ public class InviteManagerMySQL extends InviteManager {
 		ResultSet resultSet = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			updateInviteExpiry(connection);
 
@@ -135,10 +133,7 @@ public class InviteManagerMySQL extends InviteManager {
 		boolean exists = false;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			statement = connection.prepareStatement("SELECT COUNT(*) FROM `invites` WHERE LOWER(`source`) = LOWER(?) AND LOWER(`home`) = LOWER(?) AND LOWER(`target`) = LOWER(?);");
 			statement.setString(1, owner);
@@ -206,10 +201,7 @@ public class InviteManagerMySQL extends InviteManager {
 		PreparedStatement statement = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			statement = connection.prepareStatement("DELETE FROM `invites` WHERE LOWER(`source`) = LOWER(?) AND LOWER(`home`) = LOWER(?) AND LOWER(`target`) = LOWER(?);");
 			statement.setString(1, owner);
@@ -245,10 +237,7 @@ public class InviteManagerMySQL extends InviteManager {
 		ArrayList<InviteEntry> output = new ArrayList<InviteEntry> ();
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			updateInviteExpiry(connection);
 
@@ -299,10 +288,7 @@ public class InviteManagerMySQL extends InviteManager {
 		ArrayList<InviteEntry> output = new ArrayList<InviteEntry> ();
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			updateInviteExpiry(connection);
 
@@ -355,10 +341,7 @@ public class InviteManagerMySQL extends InviteManager {
 		boolean recordExists;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			updateInviteExpiry(connection);
 

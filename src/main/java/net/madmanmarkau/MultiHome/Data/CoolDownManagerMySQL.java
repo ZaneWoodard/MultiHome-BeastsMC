@@ -1,7 +1,6 @@
 package net.madmanmarkau.MultiHome.Data;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,45 +9,43 @@ import java.util.Date;
 
 import net.madmanmarkau.MultiHome.Messaging;
 import net.madmanmarkau.MultiHome.MultiHome;
-import net.madmanmarkau.MultiHome.Settings;
 
 public class CoolDownManagerMySQL extends CoolDownManager {
-	private final String url; // Database URL to connect to.
-	private final String user; // MySQL user to connect as.
-	private final String password; // Password for MySQL user.
 
 	public CoolDownManagerMySQL(MultiHome plugin) {
 		super(plugin);
 
-		// Save settings
-		this.url = Settings.getDataStoreSettingString("sql", "url");
-		this.user = Settings.getDataStoreSettingString("sql", "user");
-		this.password = Settings.getDataStoreSettingString("sql", "pass");
-
-		// Test connection
-		try {
-			Connection connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			} else {
-				connection.close();
-			}
-		} catch (SQLException e) {
-			Messaging.logSevere("Failed to contact MySQL server!", this.plugin);
-			return;
-		}
-	}
+        // Test connection
+        Connection connection = null;
+        try {
+            connection = plugin.getHikari().getConnection();
+            connection.createStatement().execute(
+                    "CREATE TABLE IF NOT EXISTS `cooldowns` (\n" +
+                    "  `player` varchar(36) NOT NULL,\n" +
+                    "  `expiry` datetime NOT NULL,\n"    +
+                    "  PRIMARY KEY (`player`)\n"         +
+                    ");"
+            );
+        } catch(SQLException ex) {
+            Messaging.logSevere("Failed to contact MySQL server or create CoolDown table", this.plugin);
+            ex.printStackTrace();
+        } finally {
+            if(connection!=null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {}
+            }
+        }
+    }
 
 	@Override
 	public void clearCooldowns() {
-		Connection connection = null;
 		PreparedStatement statement = null;
 
+        Connection connection = null;
+
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			// Clear warmups in database
 			statement = connection.prepareStatement("DELETE FROM `cooldowns`;");
@@ -56,15 +53,14 @@ public class CoolDownManagerMySQL extends CoolDownManager {
 		} catch (Exception e) {
 			Messaging.logSevere("Failed to clear cooldowns!", this.plugin);
 		} finally {
+            if(connection!=null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {}
+            }
 			if (statement != null) {
 				try {
 					statement.close();
-				} catch (SQLException ex) {} // Eat errors
-			}
-
-			if (connection != null) {
-				try {
-					connection.close();
 				} catch (SQLException ex) {} // Eat errors
 			}
 		}
@@ -77,10 +73,7 @@ public class CoolDownManagerMySQL extends CoolDownManager {
 		ResultSet resultSet = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+			connection = plugin.getHikari().getConnection();
 
 			updateCooldownExpiry(connection);
 
@@ -126,10 +119,7 @@ public class CoolDownManagerMySQL extends CoolDownManager {
 		PreparedStatement statement = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			// Remove cooldown from database
 			statement = connection.prepareStatement("DELETE FROM `cooldowns` WHERE LOWER(`player`) = LOWER(?);");
@@ -170,10 +160,7 @@ public class CoolDownManagerMySQL extends CoolDownManager {
 		PreparedStatement statement = null;
 
 		try {
-			connection = DriverManager.getConnection(this.url, this.user, this.password);
-			if (!connection.isValid(100)) {
-				throw new SQLException();
-			}
+            connection = plugin.getHikari().getConnection();
 
 			updateCooldownExpiry(connection);
 			

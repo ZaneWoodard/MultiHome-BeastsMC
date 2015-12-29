@@ -1,66 +1,58 @@
 package net.madmanmarkau.MultiHome.Data;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.UUID;
-
 import net.madmanmarkau.MultiHome.Messaging;
 import net.madmanmarkau.MultiHome.MultiHome;
 import net.madmanmarkau.MultiHome.Settings;
-
 import org.bukkit.Location;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.UUID;
 
 
 public class HomeManagerMySQL extends HomeManager {
-	private final String url; // Database URL to connect to.
-	private final String user; // MySQL user to connect as.
-	private final String password; // Password for MySQL user.
-
-    private Connection connection;
 
 	public HomeManagerMySQL(MultiHome plugin) {
 		super(plugin);
 
-		// Save settings
-		this.url = Settings.getDataStoreSettingString("sql", "url");
-		this.user = Settings.getDataStoreSettingString("sql", "user");
-		this.password = Settings.getDataStoreSettingString("sql", "pass");
-
 		// Test connection
-        if(getConnection()==null) {
-            Messaging.logSevere("Failed to contact MySQL server", this.plugin);
-        } else {
-            try {
-                getConnection().createStatement().execute(
-                    "CREATE TABLE IF NOT EXISTS `homes` (" +
-                    "  `owner` varchar(36) NOT NULL," +
-                    "  `home` varchar(50) NOT NULL," +
-                    "  `world` varchar(50) NOT NULL," +
-                    "  `x` double NOT NULL," +
-                    "  `y` double NOT NULL," +
-                    "  `z` double NOT NULL," +
-                    "  `pitch` float NOT NULL," +
-                    "  `yaw` float NOT NULL," +
-                    "  PRIMARY KEY (`owner`,`home`)" +
+        Connection connection = null;
+        try {
+            connection = plugin.getHikari().getConnection();
+            connection.createStatement().execute(
+                    "CREATE TABLE IF NOT EXISTS `homes` (\n" +
+                    "  `owner` varchar(36) NOT NULL,\n" +
+                    "  `home` varchar(50) NOT NULL,\n"  +
+                    "  `world` varchar(50) NOT NULL,\n" +
+                    "  `x` double NOT NULL,\n"          +
+                    "  `y` double NOT NULL,\n"          +
+                    "  `z` double NOT NULL,\n"          +
+                    "  `pitch` float NOT NULL,\n"       +
+                    "  `yaw` float NOT NULL,\n"         +
+                    "  PRIMARY KEY (`owner`,`home`)\n"  +
                     ");"
-                );
-            } catch (SQLException e) {
-                e.printStackTrace();
+            );
+        } catch(SQLException ex) {
+            Messaging.logSevere("Failed to contact MySQL server or create Home table", this.plugin);
+            ex.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
             }
         }
-	}
+    }
 
 	@Override
 	public void clearHomes() {
-		Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return;
-        }
-
 		PreparedStatement statement = null;
-
-		try {
+        Connection connection = null;
+        try {
+            connection = plugin.getHikari().getConnection();
 			statement = connection.prepareStatement("DELETE FROM `homes`;");
 			statement.execute();
 		} catch (SQLException e) {
@@ -73,22 +65,26 @@ public class HomeManagerMySQL extends HomeManager {
 					ex.printStackTrace();
 				}
 			}
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 	}
 
 	@Override
 	public HomeEntry getHome(UUID playerUUID, String name) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return null;
-        }
         PreparedStatement statement = null;
 		ResultSet resultSet = null;
 
-		try {
-
-			statement = connection.prepareStatement("SELECT * FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
+        Connection connection = null;
+        try {
+            connection = plugin.getHikari().getConnection();
+            statement = connection.prepareStatement(
+                    "SELECT * FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);"
+            );
 			statement.setString(1, playerUUID.toString());
 			statement.setString(2, name);
 			resultSet = statement.executeQuery();
@@ -119,6 +115,11 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 
 		return null;
@@ -126,16 +127,14 @@ public class HomeManagerMySQL extends HomeManager {
 
 	@Override
 	public void addHome(UUID playerUUID, String name, Location location) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return;
-        }
         PreparedStatement statement = null;
 		ResultSet resultSet;
 		boolean exists = false;
 
-		try {
+        Connection connection = null;
+
+        try {
+            connection = plugin.getHikari().getConnection();
 			statement = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
 			statement.setString(1, playerUUID.toString());
 			statement.setString(2, name);
@@ -180,20 +179,23 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 	}
 
 	@Override
 	public void removeHome(UUID playerUUID, String name) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return;
-        }
         PreparedStatement statement = null;
 
-		try {
-			statement = connection.prepareStatement("DELETE FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
+        Connection connection = null;
+
+        try {
+            connection = plugin.getHikari().getConnection();
+            statement = connection.prepareStatement("DELETE FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
 			statement.setString(1, playerUUID.toString());
 			statement.setString(2, name);
 			statement.execute();
@@ -205,19 +207,23 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 	}
 
 	@Override
 	public boolean getUserExists(UUID playerUUID) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return false;
-        }		PreparedStatement statement = null;
+        PreparedStatement statement = null;
 		ResultSet resultSet = null;
 
-		try {
+        Connection connection = null;
+
+        try {
+            connection = plugin.getHikari().getConnection();
 			statement = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?);");
 			statement.setString(1, playerUUID.toString());
 			resultSet = statement.executeQuery();
@@ -238,6 +244,12 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 		
 		return false;
@@ -245,16 +257,15 @@ public class HomeManagerMySQL extends HomeManager {
 
 	@Override
 	public int getUserHomeCount(UUID playerUUID) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return 0;
-        }
         PreparedStatement statement = null;
 		ResultSet resultSet = null;
 
-		try {
-			statement = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?);");
+        Connection connection = null;
+
+        try {
+            connection = plugin.getHikari().getConnection();
+
+            statement = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?);");
 			statement.setString(1, playerUUID.toString());
 			resultSet = statement.executeQuery();
 			if (resultSet.first()) {
@@ -274,6 +285,12 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 		
 		return 0;
@@ -286,14 +303,12 @@ public class HomeManagerMySQL extends HomeManager {
         ArrayList<HomeEntry> output = new ArrayList<> ();
         PreparedStatement statement = null;
 
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return output;
-        }
+        Connection connection = null;
 
-		try {
-			statement = connection.prepareStatement("SELECT * FROM `homes` WHERE LOWER(`owner`) = LOWER(?);");
+        try {
+            connection = plugin.getHikari().getConnection();
+
+            statement = connection.prepareStatement("SELECT * FROM `homes` WHERE LOWER(`owner`) = LOWER(?);");
 			statement.setString(1, playerUUID.toString());
 			resultSet = statement.executeQuery();
 			if (resultSet.first()) {
@@ -323,6 +338,12 @@ public class HomeManagerMySQL extends HomeManager {
 					statement.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 
 		return output;
@@ -330,19 +351,17 @@ public class HomeManagerMySQL extends HomeManager {
 
 	@Override
 	public void importHomes(ArrayList<HomeEntry> homes, boolean overwrite) {
-        Connection connection = getConnection();
-        if(connection==null) {
-            this.plugin.getLogger().severe("MySQL connection is null(failed to connect)!");
-            return;
-        }
         PreparedStatement statementExists = null;
 		PreparedStatement statementInsert = null;
 		PreparedStatement statementUpdate;
 		ResultSet resultSet = null;
 		boolean recordExists;
 
-		try {
-			statementExists = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
+        Connection connection = null;
+
+        try {
+            connection = plugin.getHikari().getConnection();
+            statementExists = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
 			statementInsert = connection.prepareStatement("INSERT INTO `homes`(`owner`, `home`, `world`, `x`, `y`, `z`, `pitch`, `yaw`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 			statementUpdate = connection.prepareStatement("UPDATE `homes` SET `owner` = ?, `home` = ?, `world` = ?, `x` = ?, `y` = ?, `z` = ?, `pitch` = ?, `yaw` = ? WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
 		
@@ -406,23 +425,12 @@ public class HomeManagerMySQL extends HomeManager {
 					statementInsert.close();
 				} catch (SQLException ex) {ex.printStackTrace();} // Eat errors
 			}
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ex) {} // Eat errors
+            }
 		}
 	}
-
-    /**
-     * Fetches a live connection to the database if possible.
-     * @return connection if a connection was established, null if a connection could not be made
-     */
-    private Connection getConnection() {
-        try {
-            if(connection!=null && !this.connection.isClosed()) {
-                return connection;
-            }
-            connection = DriverManager.getConnection(url, user, password);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            connection = null;
-        }
-        return connection;
-    }
 }
