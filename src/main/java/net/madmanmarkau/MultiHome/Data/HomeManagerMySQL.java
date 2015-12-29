@@ -148,43 +148,34 @@ public class HomeManagerMySQL extends HomeManager {
 
         try {
             connection = plugin.getHikari().getConnection();
-			statement = connection.prepareStatement("SELECT COUNT(*) FROM `homes` WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?);");
-			statement.setString(1, playerUUID.toString());
-			statement.setString(2, name);
-			resultSet = statement.executeQuery();
-			if (resultSet.first()) {
-				exists = resultSet.getInt(1) > 0;
-			}
 
             HomeEntry homeEntry = new HomeEntry(playerUUID, name, location);
 
-			if (exists) {
-				statement = connection.prepareStatement("UPDATE `homes` SET `owner` = ?, `home` = ?, `world` = ?, `x` = ?, `y` = ?, `z` = ?, `pitch` = ?, `yaw` = ? WHERE LOWER(`owner`) = LOWER(?) AND LOWER(`home`) = LOWER(?)");
+            statement = connection.prepareStatement(
+                    "INSERT INTO `homes`\n" +
+                    " (`owner`, `home`, `world`, `x`, `y`, `z`, `pitch`, `yaw`)\n" +
+                    " VALUES\n" +
+                    " (?, ?, ?, ?, ?, ?, ?, ?)\n" +
+                    " ON DUPLICATE KEY UPDATE\n" +
+                    " `owner` = VALUES(owner),\n" +
+                    " `home` = VALUES(home),\n" +
+                    " `world` = VALUES(world),\n" +
+                    " `x` = VALUES(x),\n" +
+                    " `y` = VALUES(y),\n" +
+                    " `z` = VALUES(z),\n" +
+                    " `pitch` = VALUES(pitch),\n" +
+                    " `yaw` = VALUES(yaw),\n"
+            );
 
-				statement.setString(1, playerUUID.toString());
-				statement.setString(2, name);
-				statement.setString(3, location.getWorld().getName());
-				statement.setDouble(4, location.getX());
-				statement.setDouble(5, location.getY());
-				statement.setDouble(6, location.getZ());
-				statement.setFloat(7, location.getPitch());
-				statement.setFloat(8, location.getYaw());
-				statement.setString(9, playerUUID.toString());
-				statement.setString(10, name);
-				statement.execute();
-			} else {
-				statement = connection.prepareStatement("INSERT INTO `homes`(`owner`, `home`, `world`, `x`, `y`, `z`, `pitch`, `yaw`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
-
-				statement.setString(1, playerUUID.toString());
-				statement.setString(2, name);
-				statement.setString(3, location.getWorld().getName());
-				statement.setDouble(4, location.getX());
-				statement.setDouble(5, location.getY());
-				statement.setDouble(6, location.getZ());
-				statement.setFloat(7, location.getPitch());
-				statement.setFloat(8, location.getYaw());
-				statement.execute();
-			}
+            statement.setString(1, playerUUID.toString());
+            statement.setString(2, name);
+            statement.setString(3, location.getWorld().getName());
+            statement.setDouble(4, location.getX());
+            statement.setDouble(5, location.getY());
+            statement.setDouble(6, location.getZ());
+            statement.setFloat(7, location.getPitch());
+            statement.setFloat(8, location.getYaw());
+            statement.execute();
 
             plugin.getCache().addHome(homeEntry);
 
