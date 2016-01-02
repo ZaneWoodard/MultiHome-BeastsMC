@@ -35,9 +35,10 @@ public class HomeManagerMySQL extends HomeManager {
                     "  PRIMARY KEY (`owner`,`home`)\n"  +
                     ");"
             );
-            //TODO test for uuid column, convert if needed
+
 			MySQLUUIDConverter converter = new MySQLUUIDConverter(plugin);
 			converter.convertData();
+
         } catch(SQLException ex) {
             Messaging.logSevere("Failed to contact MySQL server or create Home table", this.plugin);
             ex.printStackTrace();

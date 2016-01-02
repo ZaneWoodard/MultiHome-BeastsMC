@@ -53,9 +53,11 @@ public class MySQLUUIDConverter extends UUIDConverter {
             conn = this.plugin.getHikari().getConnection();
             //Add the UUID column
             stmt = conn.prepareStatement(
-                    "ALTER TABLE homes" +
+                    "ALTER TABLE homes " +
                     "MODIFY COLUMN owner VARCHAR(36)"
             );
+
+            stmt.execute();
 
             //Do batch updates on owner
             stmt = conn.prepareStatement("UPDATE homes " +
@@ -85,7 +87,14 @@ public class MySQLUUIDConverter extends UUIDConverter {
 
     @Override
     public boolean needConversion() {
-        //TODO Temporary, must find way to see if table has been converted
-        return true;
+        try {
+            ResultSet rs = plugin.getHikari().getConnection().getMetaData().getColumns(null, null, "homes", "owner");
+            rs.first();
+            int ownerLength = rs.getInt("COLUMN_SIZE");
+            return ownerLength!=36;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
