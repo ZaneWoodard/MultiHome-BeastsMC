@@ -2,6 +2,7 @@ package net.madmanmarkau.MultiHome.Data;
 
 import net.madmanmarkau.MultiHome.Messaging;
 import net.madmanmarkau.MultiHome.MultiHome;
+import net.madmanmarkau.MultiHome.converter.MySQLUUIDConverter;
 import org.bukkit.Location;
 
 import java.sql.Connection;
@@ -23,7 +24,7 @@ public class HomeManagerMySQL extends HomeManager {
             connection = plugin.getHikari().getConnection();
             connection.createStatement().execute(
                     "CREATE TABLE IF NOT EXISTS `homes` (\n" +
-                    "  `owner` varchar(36) NOT NULL,\n" +
+					"  `owner` varchar(36) NOT NULL,\n" +
                     "  `home` varchar(50) NOT NULL,\n"  +
                     "  `world` varchar(50) NOT NULL,\n" +
                     "  `x` double NOT NULL,\n"          +
@@ -34,6 +35,9 @@ public class HomeManagerMySQL extends HomeManager {
                     "  PRIMARY KEY (`owner`,`home`)\n"  +
                     ");"
             );
+            //TODO test for uuid column, convert if needed
+			MySQLUUIDConverter converter = new MySQLUUIDConverter(plugin);
+			converter.convertData();
         } catch(SQLException ex) {
             Messaging.logSevere("Failed to contact MySQL server or create Home table", this.plugin);
             ex.printStackTrace();
