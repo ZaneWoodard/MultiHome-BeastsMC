@@ -38,7 +38,6 @@ public class HomeManagerMySQL extends HomeManager {
 
 			MySQLUUIDConverter converter = new MySQLUUIDConverter(plugin);
 			converter.convertData();
-
         } catch(SQLException ex) {
             Messaging.logSevere("Failed to contact MySQL server or create Home table", this.plugin);
             ex.printStackTrace();
